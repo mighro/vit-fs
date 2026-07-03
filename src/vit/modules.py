@@ -42,10 +42,14 @@ class ViTEmbeddings(nn.Module):
         self.patch_dropout = nn.Dropout(patch_dropout_rate)
 
     def forward(self, x: Tensor) -> Tensor:
+        # Ensure batch dimension exists. Expects (C, H, W) or (B, C, H, W).
         if len(x.shape) == 3:
             x = x.unsqueeze(0)
 
         x = self.patch_embed(x)
         x = self.patch_dropout(x)
         x = self.pos_embed(x)
-        return torch.cat((self.cls_token, x), dim=1)
+        
+        # Expand CLS token to match batch size before concatenation
+        cls_tokens = self.cls_token.expand(x.size(0), -1, -1)
+        return torch.cat((cls_tokens, x), dim=1)

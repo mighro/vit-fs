@@ -1,5 +1,5 @@
 import torch
-from torch import Tensor, nn
+from torch import nn
 
 
 def get_cls_token(embed_dim: int) -> nn.Parameter:

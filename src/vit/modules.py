@@ -7,7 +7,7 @@ from .layers.pos_embed import PosEmbedding
 
 
 class ViTEmbeddings(nn.Module):
-    """Vision Transformer input layer combining patch embedding, position encoding, and CLS token."""
+    """ViT input layer combining patch embedding, position encoding, and CLS token."""
 
     def __init__(
         self,
@@ -49,7 +49,7 @@ class ViTEmbeddings(nn.Module):
         x = self.patch_embed(x)
         x = self.patch_dropout(x)
         x = self.pos_embed(x)
-        
+
         # Expand CLS token to match batch size before concatenation
         cls_tokens = self.cls_token.expand(x.size(0), -1, -1)
         return torch.cat((cls_tokens, x), dim=1)

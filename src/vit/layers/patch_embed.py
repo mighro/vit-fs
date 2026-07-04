@@ -34,6 +34,8 @@ class PatchEmbedding(nn.Module):
 
     def forward(self, x: Tensor) -> Tensor:
         if x.shape[-1] % self.patch_size != 0 or x.shape[-2] % self.patch_size != 0:
-            raise RuntimeError(f"Input width/height must be divisible by {self.patch_size}")
+            raise RuntimeError(
+                f"Input width/height must be divisible by {self.patch_size}"
+            )
 
         return self.flatten(self.patching_conv(x)).permute(0, 2, 1)

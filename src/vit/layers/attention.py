@@ -43,7 +43,7 @@ class MultiHeadSelfAttention(nn.Module):
         self.w_o = nn.Linear(embed_dim, embed_dim)
 
         if att_dropout_rate == "auto":
-            att_dropout_rate = 0.1 * (1 + 0.05 * (self.n_heads - 12))
+            att_dropout_rate = 0.1 * (1 + 0.05 * (self.n_heads - 8))
             att_dropout_rate = max(0.05, min(0.2, att_dropout_rate))
 
         self.att_dropout = nn.Dropout(p=att_dropout_rate)

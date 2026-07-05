@@ -1,6 +1,6 @@
 import torch
 
-from vit.layers.pos_embed import PosEmbedding
+from vit.layers import PosEmbedding
 
 
 def test_pos_embedding():

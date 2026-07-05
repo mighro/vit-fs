@@ -1,12 +1,14 @@
 import torch
 from torch import Tensor, nn
 
-from .layers.attention import MultiHeadSelfAttention
-from .layers.cls_token import get_cls_token
-from .layers.layer_norm import LayerNormalisation
-from .layers.mlp import FeedForward
-from .layers.patch_embed import PatchEmbedding
-from .layers.pos_embed import PosEmbedding
+from .layers import (
+    FeedForward,
+    LayerNormalisation,
+    MultiHeadSelfAttention,
+    PatchEmbedding,
+    PosEmbedding,
+    get_cls_token,
+)
 
 
 class ViTEmbeddings(nn.Module):

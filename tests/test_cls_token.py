@@ -1,4 +1,4 @@
-from vit.layers.cls_token import get_cls_token
+from vit.layers import get_cls_token
 
 
 def test_get_cls_token():

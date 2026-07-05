@@ -1,6 +1,6 @@
 import torch
 
-from vit.layers.layer_norm import LayerNormalisation
+from vit.layers import LayerNormalisation
 
 
 def test_layer_norm():

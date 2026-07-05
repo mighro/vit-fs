@@ -1,7 +1,7 @@
 import pytest
 import torch
 
-from vit.layers.patch_embed import PatchEmbedding
+from vit.layers import PatchEmbedding
 
 
 def test_patch_embedding():

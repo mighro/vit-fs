@@ -1,7 +1,7 @@
 import pytest
 import torch
 
-from vit.layers.attention import MultiHeadSelfAttention
+from vit.layers import MultiHeadSelfAttention
 
 
 def test_multi_head_self_attention_shape():

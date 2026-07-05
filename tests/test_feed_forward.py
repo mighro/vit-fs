@@ -1,6 +1,6 @@
 import torch
 
-from vit.layers.mlp import FeedForward
+from vit.layers import FeedForward
 
 
 def test_feed_forward_output_shape():

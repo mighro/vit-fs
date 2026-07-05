@@ -41,8 +41,8 @@ def test_multi_head_self_attention_dropout_behavior():
     attn = MultiHeadSelfAttention(
         embed_dim=embed_dim,
         head_size=head_size,
-        att_dropout_rate=1.0,
-        proj_dropout_rate=1.0,
+        attn_drop=1.0,
+        proj_drop=1.0,
     )
 
     x = torch.randn(1, 10, embed_dim)

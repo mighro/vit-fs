@@ -1,7 +1,8 @@
-from typing import Literal
-
 import torch
 from torch import Tensor, nn
+
+HEAD_SIZE = 64
+PROJ_DROP = 0.1
 
 
 class MultiHeadSelfAttention(nn.Module):
@@ -10,18 +11,18 @@ class MultiHeadSelfAttention(nn.Module):
     def __init__(
         self,
         embed_dim: int,
-        head_size: int = 64,
-        att_dropout_rate: float | Literal["auto"] = "auto",
-        proj_dropout_rate: float = 0.1,
+        head_size: int = HEAD_SIZE,
+        proj_drop: float = PROJ_DROP,
+        attn_drop: float | None = None,
     ):
         """Initializes the MultiHeadSelfAttention module.
 
         Args:
             embed_dim: Feature dimension of each token vector.
             head_size: Hidden dimension size per individual attention head.
-            att_dropout_rate: Dropout probability applied to attention weights.
-                If "auto", calculates rate dynamically based on head count.
-            proj_dropout_rate: Dropout probability applied to the final output.
+            proj_drop: Dropout probability applied to the final output.
+            attn_drop: Dropout probability applied to attention weights.
+                If None, calculates rate dynamically based on head count.
 
         Raises:
             ValueError: If embed_dim is not exactly divisible by head_size.
@@ -42,12 +43,12 @@ class MultiHeadSelfAttention(nn.Module):
         self.w_qkv = nn.Linear(embed_dim, embed_dim * 3, bias=False)
         self.w_o = nn.Linear(embed_dim, embed_dim)
 
-        if att_dropout_rate == "auto":
-            att_dropout_rate = 0.1 * (1 + 0.05 * (self.n_heads - 8))
-            att_dropout_rate = max(0.05, min(0.2, att_dropout_rate))
+        if attn_drop is None:
+            attn_drop = 0.1 * (1 + 0.05 * (self.n_heads - 8))
+            attn_drop = max(0.05, min(0.2, attn_drop))
 
-        self.att_dropout = nn.Dropout(p=att_dropout_rate)
-        self.proj_dropout = nn.Dropout(p=proj_dropout_rate)
+        self.attn_dropout = nn.Dropout(p=attn_drop)
+        self.proj_dropout = nn.Dropout(p=proj_drop)
 
     @staticmethod
     def attention(
@@ -77,7 +78,7 @@ class MultiHeadSelfAttention(nn.Module):
             )  # (B, N, 3, num_heads, d_k) -> (3, B, num_heads, N, d_k)
         )
 
-        x, self.attention_score = self.attention(q, k, v, self.scale, self.att_dropout)
+        x, self.attention_score = self.attention(q, k, v, self.scale, self.attn_dropout)
 
         x = x.transpose(1, 2).contiguous().view(B, N, self.n_heads * self.d_k)
 

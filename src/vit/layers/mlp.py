@@ -1,5 +1,9 @@
 from torch import Tensor, nn
 
+EXPANSION_FACTOR = 8 / 3
+MLP_DROPOUT = 0.1
+MULTIPLE_OF = 256
+
 
 class FeedForward(nn.Module):
     """Applies a Swish-Gated Linear Unit (SwiGLU) feed-forward network."""
@@ -7,9 +11,9 @@ class FeedForward(nn.Module):
     def __init__(
         self,
         embed_dim: int,
-        expansion_factor: float = 8 / 3,
-        dropout_rate: float = 0.1,
-        multiple_of: int = 256,
+        expansion_factor: float = EXPANSION_FACTOR,
+        dropout_rate: float = MLP_DROPOUT,
+        multiple_of: int = MULTIPLE_OF,
     ):
         """Initializes the SwiGLU FeedForward module.
 

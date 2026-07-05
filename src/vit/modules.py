@@ -1,7 +1,10 @@
 import torch
 from torch import Tensor, nn
 
+from .layers.attention import MultiHeadSelfAttention
 from .layers.cls_token import get_cls_token
+from .layers.layer_norm import LayerNormalisation
+from .layers.mlp import FeedForward
 from .layers.patch_embed import PatchEmbedding
 from .layers.pos_embed import PosEmbedding
 
@@ -53,3 +56,39 @@ class ViTEmbeddings(nn.Module):
         # Expand CLS token to match batch size before concatenation
         cls_tokens = self.cls_token.expand(x.size(0), -1, -1)
         return torch.cat((cls_tokens, x), dim=1)
+
+
+class EncoderBlock(nn.Module):
+    """Standard Transformer encoder block."""
+
+    def __init__(
+        self,
+        embed_dim: int,
+        head_size: int,
+        mlp_ratio: float,
+        mlp_drop: float,
+        proj_drop: float,
+        attn_drop: float | None = None,
+    ):
+        """Initialize the encoder block.
+
+        Args:
+            embed_dim: Dimension of the token embeddings.
+            head_size: Hidden dimension size per individual attention head.
+            mlp_ratio: Expansion factor for the feed-forward network's hidden layer.
+            mlp_drop: Dropout probability applied within the feed-forward network.
+            proj_drop: Dropout probability applied to the attention projection output.
+            attn_drop: Dropout probability applied to attention weights (None for auto).
+        """
+        super().__init__()
+
+        self.attn_norm = LayerNormalisation(embed_dim)
+        self.mlp_norm = LayerNormalisation(embed_dim)
+        self.attn = MultiHeadSelfAttention(embed_dim, head_size, proj_drop, attn_drop)
+        self.mlp = FeedForward(embed_dim, mlp_ratio, mlp_drop)
+
+    def forward(self, x: Tensor) -> Tensor:
+        x = x + self.attn(self.attn_norm(x))
+        x = x + self.mlp(self.mlp_norm(x))
+
+        return x

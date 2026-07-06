@@ -2,6 +2,7 @@ import torch
 from torch import Tensor, nn
 
 from .layers import (
+    DropPath,
     FeedForward,
     LayerNormalisation,
     MultiHeadSelfAttention,
@@ -70,6 +71,7 @@ class EncoderBlock(nn.Module):
         mlp_ratio: float,
         mlp_drop: float,
         proj_drop: float,
+        drop_path: float,
         attn_drop: float | None = None,
     ):
         """Initialize the encoder block.
@@ -80,6 +82,7 @@ class EncoderBlock(nn.Module):
             mlp_ratio: Expansion factor for the feed-forward network's hidden layer.
             mlp_drop: Dropout probability applied within the feed-forward network.
             proj_drop: Dropout probability applied to the attention projection output.
+            drop_path: Drop path probability applied after attention and MLP layers.
             attn_drop: Dropout probability applied to attention weights (None for auto).
         """
         super().__init__()
@@ -88,9 +91,9 @@ class EncoderBlock(nn.Module):
         self.mlp_norm = LayerNormalisation(embed_dim)
         self.attn = MultiHeadSelfAttention(embed_dim, head_size, proj_drop, attn_drop)
         self.mlp = FeedForward(embed_dim, mlp_ratio, mlp_drop)
+        self.drop_path = DropPath(drop_path) if drop_path > 0.0 else nn.Identity()
 
     def forward(self, x: Tensor) -> Tensor:
-        x = x + self.attn(self.attn_norm(x))
-        x = x + self.mlp(self.mlp_norm(x))
-
+        x = x + self.drop_path(self.attn(self.attn_norm(x)))
+        x = x + self.drop_path(self.mlp(self.mlp_norm(x)))
         return x

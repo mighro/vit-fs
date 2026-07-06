@@ -15,6 +15,7 @@ def test_encoder_block_output_shape():
         head_size=head_size,
         mlp_ratio=mlp_ratio,
         mlp_drop=0.0,
+        drop_path=0.0,
         proj_drop=0.0,
     )
 

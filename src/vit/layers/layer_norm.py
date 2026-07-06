@@ -19,6 +19,5 @@ class LayerNormalisation(nn.Module):
 
     def forward(self, x: Tensor) -> Tensor:
         mean = x.mean(dim=-1, keepdim=True)
-        # Use variance with unbiased=False to match standard LayerNorm (ddof=0)
         var = x.var(dim=-1, keepdim=True, unbiased=False)
         return self.alpha * (x - mean) / torch.sqrt(var + self.eps) + self.bias

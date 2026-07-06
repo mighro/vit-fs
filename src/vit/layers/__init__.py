@@ -1,5 +1,6 @@
 from .attention import MultiHeadSelfAttention
 from .cls_token import get_cls_token
+from .drop_path import DropPath, get_drop_rate
 from .layer_norm import LayerNormalisation
 from .mlp import FeedForward
 from .patch_embed import PatchEmbedding
@@ -11,5 +12,7 @@ __all__ = [
     "PatchEmbedding",
     "PosEmbedding",
     "LayerNormalisation",
+    "DropPath",
     "get_cls_token",
+    "get_drop_rate",
 ]

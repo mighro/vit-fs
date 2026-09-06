@@ -1,0 +1,37 @@
+[project]
+name = "vit-fs"
+version = "0.1.0"
+description = "An educational Vision Transformer (ViT) implementation from scratch in PyTorch."
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "torch>=2.12.1",
+]
+
+[dependency-groups]
+dev = [
+    "basedpyright>=1.0.0",
+    "pytest>=8.0.0",
+    "ruff>=0.3.0",
+]
+
+[tool.uv.build-backend]
+module-name = "vit"
+module-root = "src"
+
+[tool.ruff]
+line-length = 88
+target-version = "py312"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "N"]
+ignore = ["N806"]
+
+[tool.basedpyright]
+exclude = [".venv"]
+typeCheckingMode = "standard"
+pythonVersion = "3.12"
+
+[build-system]
+requires = ["uv_build>=0.12.6,<0.13.0"]
+build-backend = "uv_build"

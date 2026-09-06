@@ -6,7 +6,28 @@ MULTIPLE_OF = 256
 
 
 class FeedForward(nn.Module):
-    """Applies a Swish-Gated Linear Unit (SwiGLU) feed-forward network."""
+    """Apply a SwiGLU feed-forward network to each token independently.
+
+    The feed-forward network expands each token representation into a larger
+    hidden dimension, applies a SiLU-based gating mechanism, and projects the
+    result back to the original embedding dimension.
+
+    Unlike the original ViT feed-forward network, which uses a conventional
+    activation between two linear layers, this implementation uses the
+    SwiGLU formulation:
+
+        SiLU(W_gate(x)) * W_up(x)
+
+    The hidden dimension is rounded up to a multiple of `multiple_of`.
+
+    Args:
+        embed_dim: Dimension of the input and output token representations.
+        expansion_factor: Multiplier used to determine the hidden dimension
+            before rounding.
+        dropout_rate: Dropout probability applied after the output projection.
+        multiple_of: Hidden dimension is rounded up to the nearest multiple
+            of this value.
+    """
 
     def __init__(
         self,
@@ -15,14 +36,15 @@ class FeedForward(nn.Module):
         dropout_rate: float = MLP_DROPOUT,
         multiple_of: int = MULTIPLE_OF,
     ):
-        """Initializes the SwiGLU FeedForward module.
+        """Initialize the SwiGLU feed-forward network.
 
         Args:
-            embed_dim: The feature dimension of the input and output token vectors.
-            expansion_factor: Multiplier determining the internal hidden dimension size.
-            dropout_rate: Dropout probability applied to the final output projection.
-            multiple_of: Rounds the hidden dimension up to a multiple of this value
-                for optimal GPU memory alignment.
+            embed_dim: Dimension of the input and output token representations.
+            expansion_factor: Multiplier used to calculate the intermediate
+                hidden dimension.
+            dropout_rate: Dropout probability applied after the output projection.
+            multiple_of: Round the hidden dimension up to the nearest multiple
+                of this value.
         """
         super().__init__()
 
@@ -38,5 +60,13 @@ class FeedForward(nn.Module):
         self.dropout = nn.Dropout(p=dropout_rate)
 
     def forward(self, x: Tensor) -> Tensor:
+        """Apply the gated feed-forward transformation.
+
+        Args:
+            x: Input token representations with shape ``(B, N, D)``.
+
+        Returns:
+            Transformed token representations with the same shape as `x`.
+        """
         hidden = self.act(self.w_gate(x)) * self.w_up(x)
         return self.dropout(self.w_down(hidden))

@@ -13,7 +13,25 @@ from .layers import (
 
 
 class ViTEmbeddings(nn.Module):
-    """ViT input layer combining patch embedding, position encoding, and CLS token."""
+    """Convert an image into the token sequence consumed by the Transformer.
+
+    This module performs the input stage of the Vision Transformer:
+
+    1. Convert the image into patch embeddings.
+    2. Apply patch dropout.
+    3. Add learnable positional embeddings.
+    4. Prepend a learnable `[CLS]` token.
+
+    The resulting sequence is passed directly to the Transformer encoder
+    blocks.
+
+    Args:
+        in_channels: Number of channels in the input image.
+        image_size: Expected input image dimensions as ``(height, width)``.
+        patch_size: Height and width of each square image patch.
+        embed_dim: Dimension of every token embedding.
+        patch_dropout_rate: Dropout probability applied to patch embeddings.
+    """
 
     def __init__(
         self,
@@ -23,14 +41,15 @@ class ViTEmbeddings(nn.Module):
         embed_dim: int,
         patch_dropout_rate: float,
     ):
-        """Initialize ViT input layer.
+        """Initialize the ViT input embedding pipeline.
 
         Args:
-            in_channels: Number of input image channels (e.g., 3 for RGB).
-            image_size: Input image dimensions as (height, width).
-            patch_size: Size of each square patch.
-            embed_dim: Dimension of patch embeddings.
-            patch_dropout_rate: Dropout probability for patch embeddings.
+            in_channels: Number of channels in the input image.
+            image_size: Expected input image dimensions as ``(height, width)``.
+            patch_size: Height and width of each square image patch.
+            embed_dim: Dimension of the patch and token embeddings.
+            patch_dropout_rate: Dropout probability applied after patch
+                embedding.
         """
         super().__init__()
 
@@ -48,6 +67,18 @@ class ViTEmbeddings(nn.Module):
         self.patch_dropout = nn.Dropout(patch_dropout_rate)
 
     def forward(self, x: Tensor) -> Tensor:
+        """Convert an image into a Transformer-ready token sequence.
+
+        A missing batch dimension is automatically added when `x` has shape
+        ``(C, H, W)``.
+
+        Args:
+            x: Input image tensor with shape ``(B, C, H, W)`` or ``(C, H, W)``.
+
+        Returns:
+            Token sequence with shape ``(B, N + 1, D)``, where `N` is the number
+            of image patches and the additional token is the `[CLS]` token.
+        """
         # Ensure batch dimension exists. Expects (C, H, W) or (B, C, H, W).
         if len(x.shape) == 3:
             x = x.unsqueeze(0)
@@ -62,7 +93,33 @@ class ViTEmbeddings(nn.Module):
 
 
 class EncoderBlock(nn.Module):
-    """Standard Transformer encoder block."""
+    """Transformer encoder block using pre-normalization and residual paths.
+
+    The block contains two sublayers:
+
+    1. Multi-head self-attention.
+    2. SwiGLU feed-forward network.
+
+    Each sublayer is preceded by layer normalization and followed by a
+    residual connection. DropPath can optionally regularize both residual
+    branches using stochastic depth.
+
+    The resulting structure is:
+
+        x = x + DropPath(Attention(Norm(x)))
+        x = x + DropPath(FeedForward(Norm(x)))
+
+    Args:
+        embed_dim: Dimension of the token representations.
+        head_size: Dimension of each attention head.
+        mlp_ratio: Expansion factor used by the feed-forward network.
+        mlp_drop: Dropout probability used by the feed-forward network.
+        proj_drop: Dropout probability applied after attention's output
+            projection.
+        drop_path: Stochastic-depth probability for the residual branches.
+        attn_drop: Dropout probability applied to attention weights. If
+            `None`, the attention module determines the rate automatically.
+    """
 
     def __init__(
         self,
@@ -74,16 +131,19 @@ class EncoderBlock(nn.Module):
         drop_path: float,
         attn_drop: float | None = None,
     ):
-        """Initialize the encoder block.
+        """Initialize a Transformer encoder block.
 
         Args:
-            embed_dim: Dimension of the token embeddings.
-            head_size: Hidden dimension size per individual attention head.
-            mlp_ratio: Expansion factor for the feed-forward network's hidden layer.
-            mlp_drop: Dropout probability applied within the feed-forward network.
-            proj_drop: Dropout probability applied to the attention projection output.
-            drop_path: Drop path probability applied after attention and MLP layers.
-            attn_drop: Dropout probability applied to attention weights (None for auto).
+            embed_dim: Dimension of the token representations.
+            head_size: Dimension of each attention head.
+            mlp_ratio: Expansion factor used by the SwiGLU feed-forward network.
+            mlp_drop: Dropout probability used by the feed-forward network.
+            proj_drop: Dropout probability applied after attention's output
+                projection.
+            drop_path: Stochastic-depth probability applied to each residual
+                branch.
+            attn_drop: Dropout probability applied to attention weights.
+                If `None`, the attention module determines the rate automatically.
         """
         super().__init__()
 
@@ -94,6 +154,14 @@ class EncoderBlock(nn.Module):
         self.drop_path = DropPath(drop_path) if drop_path > 0.0 else nn.Identity()
 
     def forward(self, x: Tensor) -> Tensor:
+        """Apply self-attention and feed-forward transformations to the tokens.
+
+        Args:
+            x: Input token representations with shape ``(B, N, D)``.
+
+        Returns:
+            Transformed token representations with the same shape as `x`.
+        """
         x = x + self.drop_path(self.attn(self.attn_norm(x)))
         x = x + self.drop_path(self.mlp(self.mlp_norm(x)))
         return x

@@ -2,7 +2,22 @@ from torch import Tensor, nn
 
 
 def get_drop_rate(idx: int, depth: int, max_drop_rate: float) -> float:
-    """Calculates the linear drop path rate for a given layer index."""
+    """Compute the stochastic-depth rate for a transformer block.
+
+    The drop rate increases linearly with the block's depth. The first
+    block has a rate of 0, while the final block reaches `max_drop_rate`.
+
+    Args:
+        idx: Zero-based index of the transformer block.
+        depth: Total number of transformer blocks.
+        max_drop_rate: Maximum drop probability assigned to the final block.
+
+    Returns:
+        The DropPath probability for the block at `idx`.
+
+    Raises:
+        ValueError: If `idx` is greater than or equal to `depth`.
+    """
     if depth <= 1:
         return 0.0
     if idx >= depth:
@@ -12,20 +27,23 @@ def get_drop_rate(idx: int, depth: int, max_drop_rate: float) -> float:
 
 
 class DropPath(nn.Module):
-    """
-    Implements Stochastic Depth (DropPath).
+    """Apply stochastic depth to a residual branch.
 
-    Randomly zeroes out elements (per sample in a batch) during training with
-    probability `drop_prob`, scaling the remaining outputs by `1 / (1 - drop_prob)`
-    to maintain expected values. Acts as an identity layer during evaluation.
+    During training, entire residual paths are randomly dropped on a
+    per-sample basis. The surviving paths are scaled by
+    ``1 / (1 - drop_prob)`` so that their expected value remains unchanged.
+
+    During evaluation, DropPath acts as an identity function.
+
+    Args:
+        drop_prob: Probability of dropping the residual path.
     """
 
     def __init__(self, drop_prob: float = 0.0):
-        """
-        Initializes the DropPath module.
+        """Initialize a DropPath module.
 
         Args:
-            drop_prob (float): The probability of dropping a path. Default: 0.0.
+            drop_prob: Probability of dropping the residual path. Defaults to 0.0.
         """
         super().__init__()
         self.drop_prob = drop_prob

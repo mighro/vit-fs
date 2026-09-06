@@ -2,7 +2,25 @@ from torch import Tensor, nn
 
 
 class PatchEmbedding(nn.Module):
-    """Patch embedding layer for Vision Transformers."""
+    """Convert an image into a sequence of patch embeddings.
+
+    The image is divided into non-overlapping patches using a convolution
+    whose kernel size and stride are both equal to `patch_size`. Each patch
+    is projected directly into the transformer embedding dimension.
+
+    For an image of size ``(H, W)``, the resulting number of patches is:
+
+        (H / patch_size) * (W / patch_size)
+
+    The convolution output is then flattened into a sequence of token
+    embeddings.
+
+    Args:
+        in_channels: Number of channels in the input image.
+        patch_size: Height and width of each square image patch.
+        image_size: Expected input image dimensions as ``(height, width)``.
+        embed_dim: Dimension of each output patch embedding.
+    """
 
     def __init__(
         self,
@@ -11,13 +29,13 @@ class PatchEmbedding(nn.Module):
         image_size: tuple[int, int],
         embed_dim: int,
     ) -> None:
-        """Patch embedding layer for Vision Transformers.
+        """Initialize the image-to-patch embedding layer.
 
         Args:
-            in_channels: Number of input channels.
-            patch_size: Size of each patch.
-            image_size: Size of the input image.
-            embed_dim: Dimension of the embedding.
+            in_channels: Number of channels in the input image.
+            patch_size: Height and width of each square patch.
+            image_size: Expected input image dimensions as ``(height, width)``.
+            embed_dim: Dimension of each output patch embedding.
         """
         super().__init__()
         self.patch_size = patch_size
@@ -33,6 +51,19 @@ class PatchEmbedding(nn.Module):
         self.num_patches = (image_size[0] // patch_size) * (image_size[1] // patch_size)
 
     def forward(self, x: Tensor) -> Tensor:
+        """Convert an image batch into a sequence of patch tokens.
+
+        Args:
+            x: Input image tensor with shape ``(B, C, H, W)``.
+
+        Returns:
+            Patch embeddings with shape ``(B, N, D)``, where `N` is the number
+            of image patches and `D` is `embed_dim`.
+
+        Raises:
+            RuntimeError: If either input image dimension is not divisible by
+                `patch_size`.
+        """
         if x.shape[-1] % self.patch_size != 0 or x.shape[-2] % self.patch_size != 0:
             raise RuntimeError(
                 f"Input width/height must be divisible by {self.patch_size}"

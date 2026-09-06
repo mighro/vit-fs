@@ -1,3 +1,5 @@
+import warnings
+
 import pytest
 import torch
 
@@ -42,13 +44,24 @@ def test_classification_vit_forward(sample_model):
 
 
 def test_classification_vit_inference(sample_model):
-    """Tests the inference wrapper to ensure it returns normalized probabilities."""
+    """Test inference output and the training-to-evaluation mode transition."""
     batch_size = 2
     dummy_input = torch.randn(batch_size, 3, 224, 224)
 
-    output = sample_model.inference(dummy_input)
+    with pytest.warns(UserWarning, match="switching the model"):
+        sample_model.inference(dummy_input)
 
-    assert output.shape == (batch_size, 10)
+
+def test_classification_vit_inference_eval_mode(sample_model):
+    """Test inference does not warn when the model is already in eval mode."""
+    sample_model.eval()
+    dummy_input = torch.randn(2, 3, 224, 224)
+
+    with warnings.catch_warnings():
+        warnings.simplefilter("error")
+        output = sample_model.inference(dummy_input)
+
+    assert output.shape == (2, 10)
 
     sums = output.sum(dim=-1)
 

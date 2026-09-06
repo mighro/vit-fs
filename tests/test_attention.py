@@ -34,7 +34,7 @@ def test_multi_head_self_attention_invalid_dims():
 
 
 def test_multi_head_self_attention_dropout_behavior():
-    """Test that 100% attention dropout results in near-zero output (before projection)."""
+    """Test that full attention dropout produces a near-zero output."""
     embed_dim = 768
     head_size = 64
     # Set both dropouts to 1.0 to isolate the effect

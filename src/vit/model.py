@@ -1,3 +1,5 @@
+import warnings
+
 import torch
 from torch import Tensor, nn
 
@@ -7,12 +9,27 @@ from .modules import EncoderBlock, ViTEmbeddings
 
 
 class ClassificationViT(nn.Module):
-    """
-    Vision Transformer (ViT) architecture for image classification.
+    """Vision Transformer encoder for image classification.
 
-    This module implements an encoder-only transformer that processes
-    image patches and uses a prepended class token ([CLS]) to perform
-    classification tasks.
+    The model converts an input image into a sequence of patch embeddings,
+    prepends a learnable classification token, and processes the resulting
+    sequence with a stack of Transformer encoder blocks.
+
+    The final representation of the `[CLS]` token is passed through a
+    normalization layer and linear classification head to produce one logit
+    for each target class.
+
+    The model consists of three main stages:
+
+    1. Image-to-token conversion with `ViTEmbeddings`.
+    2. Token processing with Transformer encoder blocks.
+    3. Classification from the final `[CLS]` representation.
+
+    Args:
+        in_channels: Number of channels in each input image.
+        image_size: Expected input image size as ``(height, width)``.
+        num_classes: Number of classes predicted by the classification head.
+        config: Transformer architecture and regularization configuration.
     """
 
     def __init__(
@@ -22,15 +39,14 @@ class ClassificationViT(nn.Module):
         num_classes: int,
         config: ViTConfig,
     ):
-        """
-        Initializes the ClassificationViT model.
+        """Initialize the Vision Transformer classifier.
 
         Args:
-            in_channels (int): Number of color channels in the input images (e.g., 3 for RGB).
-            image_size (tuple[int, int]): The height and width of the input images.
-            num_classes (int): The number of output classes for classification.
-            config (ViTConfig): Configuration object containing transformer hyperparameters
-                (e.g., depth, embed_dim, patch_size, dropout rates).
+            in_channels: Number of channels in each input image.
+            image_size: Expected input image dimensions as ``(height, width)``.
+            num_classes: Number of output classes.
+            config: Configuration containing the transformer architecture and
+                regularization hyperparameters.
         """
         super().__init__()
 
@@ -72,7 +88,22 @@ class ClassificationViT(nn.Module):
         )
 
     def forward(self, x: Tensor) -> Tensor:
-        """Performs a forward pass yielding raw classification logits."""
+        """Run a forward pass and return classification logits.
+
+        The input image is converted into patch tokens, processed by the
+        Transformer encoder, and classified using the final `[CLS]` token.
+
+        This method returns raw logits rather than probabilities. Apply an
+        appropriate loss function such as cross-entropy during training, or
+        softmax externally when probabilities are required.
+
+        Args:
+            x: Input image tensor with shape ``(B, C, H, W)`` or, when supported
+                by the embedding layer, ``(C, H, W)``.
+
+        Returns:
+            Classification logits with shape ``(B, num_classes)``.
+        """
         x = self.embeddings(x)
 
         for block in self.blocks:
@@ -84,17 +115,35 @@ class ClassificationViT(nn.Module):
 
     @torch.inference_mode()
     def inference(self, x: Tensor) -> Tensor:
-        """
-        Performs model inference, returning class probabilities.
+        """Run inference and return normalized class probabilities.
 
-        Automatically sets the model to evaluation mode and applies
-        softmax to the raw logits.
+        This method disables gradient tracking with `torch.inference_mode()` and
+        ensures the model is in evaluation mode before performing the forward pass.
+
+        If the model is currently in training mode, a `UserWarning` is emitted
+        because calling this method changes the model's training state. The model
+        remains in evaluation mode after inference completes.
 
         Args:
-            x (Tensor): A batch of input images with shape `(B, in_channels, H, W)`.
+            x: Input image tensor with shape ``(B, C, H, W)`` or, when supported
+                by the embedding layer, ``(C, H, W)``.
 
         Returns:
-            Tensor: Normalized class probabilities of shape `(B, num_classes)`.
+            Class probabilities with shape ``(B, num_classes)``. Each row sums
+            to approximately 1.
+
+        Warnings:
+            UserWarning: If the model is currently in training mode and must be
+                switched to evaluation mode.
         """
+        if self.training:
+            warnings.warn(
+                "inference() is switching the model from training mode to "
+                "evaluation mode. The model will remain in evaluation mode "
+                "after inference().",
+                UserWarning,
+                stacklevel=2,
+            )
+
         self.eval()
         return torch.softmax(self.forward(x), dim=-1)

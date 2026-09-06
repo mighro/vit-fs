@@ -39,7 +39,7 @@ def test_patch_embedding_grayscale():
 
 
 def test_patch_embedding_invalid_dimensions():
-    """Ensure RuntimeError is raised when input dimensions aren't divisible by patch_size."""
+    """Test that non-divisible image dimensions raise RuntimeError."""
     pe = PatchEmbedding(
         in_channels=3, patch_size=16, image_size=(224, 224), embed_dim=768
     )

@@ -38,13 +38,21 @@ def test_patch_embedding_grayscale():
     assert out.shape == (1, 196, 768)
 
 
-def test_patch_embedding_invalid_dimensions():
-    """Test that non-divisible image dimensions raise RuntimeError."""
+def test_patch_embedding_init_non_divisible():
+    """Test that image_size not divisible by patch_size raises ValueError in __init__."""
+    with pytest.raises(ValueError, match="must be divisible by patch_size"):
+        PatchEmbedding(
+            in_channels=3, patch_size=16, image_size=(220, 220), embed_dim=768
+        )
+
+
+def test_patch_embedding_forward_mismatched_size():
+    """Test that passing an image size different from image_size raises ValueError."""
     pe = PatchEmbedding(
         in_channels=3, patch_size=16, image_size=(224, 224), embed_dim=768
     )
-    x = torch.randn(1, 3, 220, 220)  # Not divisible by 16
-    with pytest.raises(RuntimeError, match="Input width/height must be divisible"):
+    x = torch.randn(1, 3, 128, 128)
+    with pytest.raises(ValueError, match="do not match expected image_size"):
         pe(x)
 
 

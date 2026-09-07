@@ -1,23 +1,36 @@
 # vit-fs
 
-An implementation of a Vision Transformer (ViT) from scratch using PyTorch.
+[![Python](https://img.shields.io/badge/Python-3.12%2B-blue?logo=python&logoColor=white)](https://www.python.org/)
+[![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
 
-The project is mainly for learning and understanding how the different parts of a ViT work by implementing them directly rather than using an existing high-level implementation.
+A modern Vision Transformer (ViT) inspired vision encoder implemented from scratch in PyTorch.
+
+This project is designed for understanding and experimenting with transformer-based vision models by implementing the major components directly rather than relying on high-level libraries.
+
+While inspired by the original Vision Transformer (ViT) architecture, this implementation incorporates several modern transformer design choices including:
+
+- SwiGLU feed-forward networks
+- Patch dropout
+- Stochastic depth (DropPath)
+- Configurable attention backends
+- Dynamic attention dropout
+- Modular transformer components
 
 ## What is implemented
 
-* Patch embedding using a strided convolution
+* Patch embedding using a strided convolution with image size validation
 * Learnable `[CLS]` token
 * Learnable positional embeddings
-* Multi-head self-attention
+* Multi-head self-attention with dynamic attention dropout heuristic
 * Transformer encoder blocks
 * Layer normalization
 * SwiGLU feed-forward layers
-* Dropout
+* Patch dropout and dropout regularization
 * Stochastic depth / DropPath
 * Classification head
-* Configurable ViT architecture
-* Unit tests for the individual components and model
+* Configurable ViT architecture with post-init validation
+* Model inspection script using `torchinfo`
+* Unit tests for individual components and the end-to-end model
 
 The main classes are:
 
@@ -29,6 +42,8 @@ from vit import ClassificationViT, ViTConfig
 
 ```text
 .
+├── scripts/
+│   └── model_summary.py
 ├── src/
 │   └── vit/
 │       ├── layers/
@@ -37,6 +52,7 @@ from vit import ClassificationViT, ViTConfig
 │       │   ├── drop_path.py
 │       │   ├── layer_norm.py
 │       │   ├── mlp.py
+│       │   ├── patch_dropout.py
 │       │   ├── patch_embed.py
 │       │   └── pos_embed.py
 │       ├── __init__.py
@@ -107,17 +123,7 @@ ViTConfig.large()
 ViTConfig.xlarge()
 ```
 
-These are project-specific configurations and are not exact reproductions of the configurations from the original ViT paper.
-
-The configuration includes:
-
-* Patch size
-* Embedding dimension
-* Attention head size
-* Number of transformer blocks
-* Feed-forward expansion ratio
-* Dropout rates
-* Stochastic depth rate
+These presets are verified with post-initialization validation to ensure that dimensions (e.g. `embed_dim % head_size == 0`), layer depths, and dropout probabilities are valid.
 
 A configuration can also be created manually:
 
@@ -130,6 +136,23 @@ config = ViTConfig(
 )
 ```
 
+## Model statistics
+
+Model parameters and computational metrics can be inspected across all presets using the summary script:
+
+```bash
+uv run python scripts/model_summary.py
+```
+
+### Comparative summary (Input shape: `(1, 3, 224, 224)` | Classes: 1000)
+
+| Config | Embed Dim | Heads | Depth | Params (M) | Mult-Adds (G) | Model Size |
+|---|---|---|---|---|---|---|
+| `tiny` | 256 | 4 | 10 | 9.04M | 0.05G | 34.47 MB |
+| `base` | 384 | 6 | 12 | 22.01M | 0.08G | 83.97 MB |
+| `large` | 512 | 8 | 14 | 48.75M | 0.13G | 185.98 MB |
+| `xlarge` | 768 | 12 | 16 | 114.82M | 0.23G | 438.00 MB |
+
 ## Design
 
 The model follows this general pipeline:
@@ -141,10 +164,10 @@ Image
 Patch Embedding
   │
   ▼
-Patch Dropout
+Add Positional Embeddings
   │
   ▼
-Add Positional Embeddings
+Patch Dropout
   │
   ▼
 Prepend [CLS] Token
@@ -182,10 +205,6 @@ They were used for:
 
 The implementation was written by me. I review and modify suggestions before using them in the project.
 
-## Project status
+## License
 
-This is a learning project.
-
-The code is kept relatively low-level so that the individual parts of the ViT can be inspected, tested, and changed independently.
-
-It is not intended to replace optimized ViT implementations or to be a production training framework.
+This project is licensed under the MIT License.

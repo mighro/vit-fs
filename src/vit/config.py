@@ -34,6 +34,10 @@ class ViTConfig:
             If `None`, the attention module chooses a rate automatically.
         max_path_drop: Maximum stochastic-depth probability. The probability
             increases linearly from the first to the final transformer block.
+
+    Raises:
+        ValueError: If any hyperparameter violates architectural or probability
+            constraints.
     """
 
     # Patch embedding
@@ -53,6 +57,42 @@ class ViTConfig:
     attn_proj_drop: float = 0.1
     attn_drop: float | None = None
     max_path_drop: float = 0.15
+
+    def __post_init__(self) -> None:
+        """Validate configuration parameters."""
+        if self.patch_size <= 0:
+            raise ValueError(f"patch_size must be positive, got {self.patch_size}.")
+        if self.embed_dim <= 0:
+            raise ValueError(f"embed_dim must be positive, got {self.embed_dim}.")
+        if self.head_size <= 0:
+            raise ValueError(f"head_size must be positive, got {self.head_size}.")
+        if self.embed_dim % self.head_size != 0:
+            raise ValueError(
+                f"embed_dim ({self.embed_dim}) must be exactly divisible "
+                f"by head_size ({self.head_size})."
+            )
+        if self.depth <= 0:
+            raise ValueError(f"depth must be positive, got {self.depth}.")
+        if self.mlp_ratio <= 0.0:
+            raise ValueError(f"mlp_ratio must be positive, got {self.mlp_ratio}.")
+        if not (0.0 <= self.mlp_drop <= 1.0):
+            raise ValueError(f"mlp_drop must be in [0.0, 1.0], got {self.mlp_drop}.")
+        if not (0.0 <= self.patch_drop < 1.0):
+            raise ValueError(
+                f"patch_drop must be in [0.0, 1.0), got {self.patch_drop}."
+            )
+        if not (0.0 <= self.attn_proj_drop <= 1.0):
+            raise ValueError(
+                f"attn_proj_drop must be in [0.0, 1.0], got {self.attn_proj_drop}."
+            )
+        if self.attn_drop is not None and not (0.0 <= self.attn_drop <= 1.0):
+            raise ValueError(
+                f"attn_drop must be None or in [0.0, 1.0], got {self.attn_drop}."
+            )
+        if not (0.0 <= self.max_path_drop <= 1.0):
+            raise ValueError(
+                f"max_path_drop must be in [0.0, 1.0], got {self.max_path_drop}."
+            )
 
     @classmethod
     def tiny(cls, **kwargs) -> "ViTConfig":

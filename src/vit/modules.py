@@ -6,6 +6,7 @@ from .layers import (
     FeedForward,
     LayerNormalisation,
     MultiHeadSelfAttention,
+    PatchDropout,
     PatchEmbedding,
     PosEmbedding,
     get_cls_token,
@@ -64,7 +65,7 @@ class ViTEmbeddings(nn.Module):
             embed_dim=embed_dim,
         )
         self.cls_token = get_cls_token(embed_dim=embed_dim)
-        self.patch_dropout = nn.Dropout(patch_dropout_rate)
+        self.patch_dropout = PatchDropout(patch_dropout_rate)
 
     def forward(self, x: Tensor) -> Tensor:
         """Convert an image into a Transformer-ready token sequence.
@@ -84,8 +85,8 @@ class ViTEmbeddings(nn.Module):
             x = x.unsqueeze(0)
 
         x = self.patch_embed(x)
-        x = self.patch_dropout(x)
         x = self.pos_embed(x)
+        x = self.patch_dropout(x)
 
         # Expand CLS token to match batch size before concatenation
         cls_tokens = self.cls_token.expand(x.size(0), -1, -1)

@@ -1,21 +1,13 @@
 """Generate torchinfo model summaries and comparative statistics for all ViT configs."""
 
 import sys
-from pathlib import Path
 
 from vit import ClassificationViT, ViTConfig
-
-# Ensure `src` is in the Python search path
-ROOT_DIR = Path(__file__).resolve().parent.parent
-SRC_DIR = ROOT_DIR / "src"
-if str(SRC_DIR) not in sys.path:
-    sys.path.insert(0, str(SRC_DIR))
 
 try:
     from torchinfo import summary
 except ImportError:
     print("Error: 'torchinfo' is not installed.")
-    print("Install it with: uv add --dev torchinfo (or pip install torchinfo)")
     sys.exit(1)
 
 

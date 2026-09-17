@@ -3,8 +3,6 @@
 [![Python](https://img.shields.io/badge/Python-3.12%2B-blue?logo=python&logoColor=white)](https://www.python.org/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
 
-A modern Vision Transformer (ViT) inspired vision encoder implemented from scratch in PyTorch.
-
 This project is designed for understanding and experimenting with transformer-based vision models by implementing the major components directly rather than relying on high-level libraries.
 
 While inspired by the original Vision Transformer (ViT) architecture, this implementation incorporates several modern transformer design choices including:

@@ -116,13 +116,9 @@ Logits (B, num_classes)
 
 A few notes on the choices:
 
-**Pre-norm over post-norm.** Normalization happens before each sublayer, not after. This tends to stabilize training for deeper stacks.
-
 **SwiGLU instead of ReLU MLP.** The feed-forward network uses a gated formulation: `SiLU(W_gate(x)) * W_up(x)`, then projects back down. The hidden dim is rounded up to a multiple of 256 for hardware-friendly tensor shapes.
 
 **Dynamic attention dropout.** If you don't specify `attn_drop` in the config, it's computed as `0.1 * (1 + 0.05 * (n_heads - 8))`, clamped to `[0.05, 0.2]`. The idea: bigger models with more heads benefit from a touch more regularization on the attention weights.
-
-**Two attention backends.** The default uses `F.scaled_dot_product_attention`, which picks FlashAttention kernels automatically when available. Set `backend="manual"` on `MultiHeadSelfAttention` if you want the raw attention scores accessible in `attention_score` for visualization or debugging.
 
 ## Repo layout
 

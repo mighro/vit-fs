@@ -17,7 +17,6 @@ Everything you'd expect from a ViT, plus a few modern twists:
 - **SwiGLU feed-forward network** instead of the original two-linear + ReLU
 - **Patch dropout** — drops whole token vectors, not individual features
 - **Stochastic depth (DropPath)** with a linear schedule across blocks
-- **Two attention backends**: PyTorch's fused `scaled_dot_product_attention` for speed, and a manual QK^T version if you want to inspect the attention matrices yourself
 - **Four config presets** (`tiny`, `base`, `large`, `xlarge`) with validation on construction
 - **Unit tests** for each layer and the full model
 

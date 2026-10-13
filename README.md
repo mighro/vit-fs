@@ -13,7 +13,7 @@ Everything you'd expect from a ViT, plus a few modern twists:
 
 - **Patch embedding** via strided conv (with shape validation so you can't accidentally feed it the wrong image size)
 - **Learnable `[CLS]` token** and **positional embeddings**
-- **Multi-head self-attention** with a dynamic dropout heuristic (more heads, slightly more dropout, clamped to a sane range)
+- **Multi-head self-attention** written out explicitly (`Q @ K^T` + softmax, split across heads) with a dynamic dropout heuristic (more heads, slightly more dropout, clamped to a sane range). No fused/optimized backend — every step is visible, and the attention weights are kept on `attention_score` for inspection/plotting
 - **SwiGLU feed-forward network** instead of the original two-linear + ReLU
 - **Patch dropout** — drops whole token vectors, not individual features
 - **Stochastic depth (DropPath)** with a linear schedule across blocks
@@ -124,7 +124,7 @@ A few notes on the choices:
 ```
 src/vit/
 ├── layers/          # Individual building blocks
-│   ├── attention.py       # MultiHeadSelfAttention
+│   ├── attention.py       # MultiHeadSelfAttention (explicit QK^T, no fused backend)
 │   ├── cls_token.py       # get_cls_token()
 │   ├── drop_path.py       # DropPath + get_drop_rate()
 │   ├── layer_norm.py      # LayerNormalisation (hand-written, not nn.LayerNorm)
@@ -140,7 +140,7 @@ scripts/model_summary.py   # torchinfo-based model stats
 tests/                     # pytest suite for all layers + end-to-end
 ```
 
-Layer norm is written out explicitly rather than wrapping `torch.nn.LayerNorm` — I wanted to see the mean/variance/scale/bias operations happen, not hide them behind a library call. Same spirit for everything else: if there's a non-obvious step, it's visible in the code.
+Layer norm is written out explicitly rather than wrapping `torch.nn.LayerNorm` — I wanted to see the mean/variance/scale/bias operations happen, not hide them behind a library call. Same spirit for attention: no `scaled_dot_product_attention`, just the raw `Q @ K^T` math with comments at each step. Same spirit for everything else: if there's a non-obvious step, it's visible in the code.
 
 ## Testing
 
@@ -148,7 +148,7 @@ Layer norm is written out explicitly rather than wrapping `torch.nn.LayerNorm` �
 uv run pytest
 ```
 
-Covers shape checks, gradient flow, edge cases (non-divisible dims, invalid backends, eval vs train behavior), and the inference-mode transition.
+Covers shape checks, gradient flow, edge cases (non-divisible dims, attention-weight storage, eval vs train behavior), and the inference-mode transition.
 
 ## What LLMs helped with
 

@@ -85,31 +85,23 @@ Run `uv run python scripts/model_summary.py` to regenerate the table above with 
 
 ```
 Image (B, C, H, W)
-│
-▼
-Patch Embedding ──── conv2d with kernel=stride=patch_size
-│
-▼
-Positional Embedding ── add learnable vector per token position
-│
-▼
-Patch Dropout ─────── randomly discard whole tokens (training only)
-│
-▼
-Prepend [CLS] ─────── learnable token, never dropped
-│
-▼
-N × Encoder Block ──── pre-norm: LayerNorm → Attention → residual
-│                     pre-norm: LayerNorm → SwiGLU FFN → residual
-│                     (both residuals pass through DropPath)
-│
-▼
-Take [CLS] ────────── first token of the sequence
-│
-▼
-Classification Head ─ LayerNorm → Linear
-│
-▼
+    ↓
+Patch Embedding          conv2d with kernel = stride = patch_size
+    ↓
+Positional Embedding     add a learnable vector per token position
+    ↓
+Patch Dropout            randomly discard whole tokens (training only)
+    ↓
+Prepend [CLS] token      learnable, never dropped
+    ↓
+Encoder Block × N        LayerNorm → Attention → residual
+                         LayerNorm → SwiGLU FFN → residual
+                         (both residuals pass through DropPath)
+    ↓
+Take [CLS]               first token of the sequence
+    ↓
+Classification Head      LayerNorm → Linear
+    ↓
 Logits (B, num_classes)
 ```
 

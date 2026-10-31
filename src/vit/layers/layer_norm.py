@@ -5,13 +5,6 @@ from torch import Tensor, nn
 class LayerNormalisation(nn.Module):
     """Normalize each token independently across its feature dimension.
 
-    Layer normalization computes the mean and variance across the final
-    dimension of the input tensor, then applies a learnable scale and bias.
-
-    This implementation is written explicitly rather than using
-    `torch.nn.LayerNorm` so that the normalization operation is visible
-    as part of the from-scratch implementation.
-
     Args:
         embed_dim: Number of features in each token representation.
         eps: Small value added to the variance for numerical stability.
@@ -39,6 +32,10 @@ class LayerNormalisation(nn.Module):
             A tensor with the same shape as `x`, normalized using the learnable
             scale (`alpha`) and bias parameters.
         """
+        # Layer normalization computes the mean and variance across the final
+        # dimension, then applies a learnable scale and bias. This is written
+        # out explicitly instead of using torch.nn.LayerNorm so the operation
+        # stays visible as part of the from-scratch implementation.
         mean = x.mean(dim=-1, keepdim=True)
         var = x.var(dim=-1, keepdim=True, unbiased=False)
         return self.alpha * (x - mean) / torch.sqrt(var + self.eps) + self.bias

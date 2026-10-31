@@ -11,26 +11,23 @@ from .modules import EncoderBlock, ViTEmbeddings
 class ClassificationViT(nn.Module):
     """Vision Transformer encoder for image classification.
 
-    The model converts an input image into a sequence of patch embeddings,
-    prepends a learnable classification token, and processes the resulting
-    sequence with a stack of Transformer encoder blocks.
-
-    The final representation of the `[CLS]` token is passed through a
-    normalization layer and linear classification head to produce one logit
-    for each target class.
-
-    The model consists of three main stages:
-
-    1. Image-to-token conversion with `ViTEmbeddings`.
-    2. Token processing with Transformer encoder blocks.
-    3. Classification from the final `[CLS]` representation.
-
     Args:
         in_channels: Number of channels in each input image.
         image_size: Expected input image size as ``(height, width)``.
         num_classes: Number of classes predicted by the classification head.
         config: Transformer architecture and regularization configuration.
     """
+
+    # The model converts an input image into a sequence of patch embeddings,
+    # prepends a learnable classification token, and processes the resulting
+    # sequence with a stack of Transformer encoder blocks. The final
+    # representation of the [CLS] token is normalized and passed through a
+    # linear classification head to produce one logit per class.
+    #
+    # The model consists of three stages:
+    # 1. Image-to-token conversion with `ViTEmbeddings`.
+    # 2. Token processing with Transformer encoder blocks.
+    # 3. Classification from the final [CLS] representation.
 
     def __init__(
         self,
@@ -90,10 +87,7 @@ class ClassificationViT(nn.Module):
     def forward(self, x: Tensor) -> Tensor:
         """Run a forward pass and return classification logits.
 
-        The input image is converted into patch tokens, processed by the
-        Transformer encoder, and classified using the final `[CLS]` token.
-
-        This method returns raw logits rather than probabilities. Apply an
+        The method returns raw logits rather than probabilities. Apply an
         appropriate loss function such as cross-entropy during training, or
         softmax externally when probabilities are required.
 
@@ -104,6 +98,8 @@ class ClassificationViT(nn.Module):
         Returns:
             Classification logits with shape ``(B, num_classes)``.
         """
+        # Convert the image to tokens, run the encoder stack, then classify
+        # from the final [CLS] representation.
         x = self.embeddings(x)
 
         for block in self.blocks:
@@ -117,12 +113,9 @@ class ClassificationViT(nn.Module):
     def inference(self, x: Tensor) -> Tensor:
         """Run inference and return normalized class probabilities.
 
-        This method disables gradient tracking with `torch.inference_mode()` and
-        ensures the model is in evaluation mode before performing the forward pass.
-
-        If the model is currently in training mode, a `UserWarning` is emitted
-        because calling this method changes the model's training state. The model
-        remains in evaluation mode after inference completes.
+        Note:
+            The model is switched to evaluation mode if needed and remains in
+            evaluation mode after inference completes.
 
         Args:
             x: Input image tensor with shape ``(B, C, H, W)`` or, when supported
@@ -136,6 +129,8 @@ class ClassificationViT(nn.Module):
             UserWarning: If the model is currently in training mode and must be
                 switched to evaluation mode.
         """
+        # Gradients are disabled by torch.inference_mode(). The warning below
+        # fires because this method changes the model's training state.
         if self.training:
             warnings.warn(
                 "inference() is switching the model from training mode to "

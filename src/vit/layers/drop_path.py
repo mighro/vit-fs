@@ -2,10 +2,7 @@ from torch import Tensor, nn
 
 
 def get_drop_rate(idx: int, depth: int, max_drop_rate: float) -> float:
-    """Compute the stochastic-depth rate for a transformer block.
-
-    The drop rate increases linearly with the block's depth. The first
-    block has a rate of 0, while the final block reaches `max_drop_rate`.
+    """Return the stochastic-depth rate for a transformer block.
 
     Args:
         idx: Zero-based index of the transformer block.
@@ -18,6 +15,8 @@ def get_drop_rate(idx: int, depth: int, max_drop_rate: float) -> float:
     Raises:
         ValueError: If `idx` is greater than or equal to `depth`.
     """
+    # The rate increases linearly with depth: 0 for the first block and
+    # `max_drop_rate` for the final block.
     if depth <= 1:
         return 0.0
     if idx >= depth:
@@ -28,10 +27,6 @@ def get_drop_rate(idx: int, depth: int, max_drop_rate: float) -> float:
 
 class DropPath(nn.Module):
     """Apply stochastic depth to a residual branch.
-
-    During training, entire residual paths are randomly dropped on a
-    per-sample basis. The surviving paths are scaled by
-    ``1 / (1 - drop_prob)`` so that their expected value remains unchanged.
 
     During evaluation, DropPath acts as an identity function.
 
@@ -50,9 +45,21 @@ class DropPath(nn.Module):
         self.keep_prob = 1.0 - drop_prob
 
     def forward(self, x: Tensor) -> Tensor:
+        """Apply stochastic depth to the input tensor.
+
+        Args:
+            x: Input tensor whose first dimension is the batch size.
+
+        Returns:
+            The input unchanged, or the residual path dropped and rescaled
+            per sample during training.
+        """
         if self.drop_prob == 0.0 or not self.training:
             return x
 
+        # Entire residual paths are randomly dropped on a per-sample basis.
+        # Surviving paths are scaled by 1 / (1 - drop_prob) so their expected
+        # value stays unchanged.
         shape = (x.shape[0], 1, 1)
         mask = x.new_empty(shape).bernoulli_(self.keep_prob)
 

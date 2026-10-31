@@ -8,18 +8,6 @@ MULTIPLE_OF = 256
 class FeedForward(nn.Module):
     """Apply a SwiGLU feed-forward network to each token independently.
 
-    The feed-forward network expands each token representation into a larger
-    hidden dimension, applies a SiLU-based gating mechanism, and projects the
-    result back to the original embedding dimension.
-
-    Unlike the original ViT feed-forward network, which uses a conventional
-    activation between two linear layers, this implementation uses the
-    SwiGLU formulation:
-
-        SiLU(W_gate(x)) * W_up(x)
-
-    The hidden dimension is rounded up to a multiple of `multiple_of`.
-
     Args:
         embed_dim: Dimension of the input and output token representations.
         expansion_factor: Multiplier used to determine the hidden dimension
@@ -28,6 +16,16 @@ class FeedForward(nn.Module):
         multiple_of: Hidden dimension is rounded up to the nearest multiple
             of this value.
     """
+
+    # The feed-forward network expands each token into a larger hidden
+    # dimension, applies a SiLU-based gating mechanism, and projects the
+    # result back to the original embedding dimension:
+    #
+    #     SiLU(W_gate(x)) * W_up(x)
+    #
+    # This differs from the original ViT feed-forward network, which uses a
+    # conventional activation between two linear layers. The hidden dimension
+    # is rounded up to a multiple of `multiple_of`.
 
     def __init__(
         self,

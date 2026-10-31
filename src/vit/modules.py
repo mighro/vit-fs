@@ -14,17 +14,7 @@ from .layers import (
 
 
 class ViTEmbeddings(nn.Module):
-    """Convert an image into the token sequence consumed by the Transformer.
-
-    This module performs the input stage of the Vision Transformer:
-
-    1. Convert the image into patch embeddings.
-    2. Apply patch dropout.
-    3. Add learnable positional embeddings.
-    4. Prepend a learnable `[CLS]` token.
-
-    The resulting sequence is passed directly to the Transformer encoder
-    blocks.
+    """Input embedding pipeline of the Vision Transformer.
 
     Args:
         in_channels: Number of channels in the input image.
@@ -33,6 +23,15 @@ class ViTEmbeddings(nn.Module):
         embed_dim: Dimension of every token embedding.
         patch_dropout_rate: Dropout probability applied to patch embeddings.
     """
+
+    # This module performs the input stage of the Vision Transformer:
+    # 1. Convert the image into patch embeddings.
+    # 2. Add learnable positional embeddings.
+    # 3. Apply patch dropout.
+    # 4. Prepend a learnable [CLS] token.
+    #
+    # The resulting sequence is passed directly to the Transformer encoder
+    # blocks.
 
     def __init__(
         self,
@@ -94,21 +93,7 @@ class ViTEmbeddings(nn.Module):
 
 
 class EncoderBlock(nn.Module):
-    """Transformer encoder block using pre-normalization and residual paths.
-
-    The block contains two sublayers:
-
-    1. Multi-head self-attention.
-    2. SwiGLU feed-forward network.
-
-    Each sublayer is preceded by layer normalization and followed by a
-    residual connection. DropPath can optionally regularize both residual
-    branches using stochastic depth.
-
-    The resulting structure is:
-
-        x = x + DropPath(Attention(Norm(x)))
-        x = x + DropPath(FeedForward(Norm(x)))
+    """Pre-norm Transformer encoder block.
 
     Args:
         embed_dim: Dimension of the token representations.
@@ -121,6 +106,14 @@ class EncoderBlock(nn.Module):
         attn_drop: Dropout probability applied to attention weights. If
             `None`, the attention module determines the rate automatically.
     """
+
+    # The block contains two sublayers, each preceded by layer normalization
+    # and followed by a residual connection:
+    #
+    #     x = x + DropPath(Attention(Norm(x)))
+    #     x = x + DropPath(FeedForward(Norm(x)))
+    #
+    # DropPath regularizes both residual branches using stochastic depth.
 
     def __init__(
         self,

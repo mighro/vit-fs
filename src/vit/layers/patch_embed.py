@@ -2,17 +2,7 @@ from torch import Tensor, nn
 
 
 class PatchEmbedding(nn.Module):
-    """Convert an image into a sequence of patch embeddings.
-
-    The image is divided into non-overlapping patches using a 2D convolution
-    whose kernel size and stride are both equal to `patch_size`. Each patch
-    is projected directly into the transformer embedding dimension.
-
-    For an image of size ``(H, W)``, the resulting number of patches is:
-        ``(H / patch_size) * (W / patch_size)``
-
-    The convolution output is flattened and transposed into a sequence of
-    token embeddings.
+    """Project an image into a sequence of patch embeddings.
 
     Args:
         in_channels: Number of channels in the input image.
@@ -24,6 +14,13 @@ class PatchEmbedding(nn.Module):
         ValueError: If either dimension of `image_size` is not divisible by
             `patch_size`.
     """
+
+    # The image is divided into non-overlapping patches by a 2D convolution
+    # whose kernel size and stride both equal `patch_size`, so each patch is
+    # projected directly into the transformer embedding dimension. For an
+    # image of size (H, W), the number of patches is
+    # (H / patch_size) * (W / patch_size). The convolution output is then
+    # flattened and transposed into a sequence of token embeddings.
 
     def __init__(
         self,

@@ -5,16 +5,15 @@ from torch import Tensor, nn
 class PosEmbedding(nn.Module):
     """Add learnable positional embeddings to a sequence of tokens.
 
-    Transformers do not inherently know the spatial or sequential position
-    of a token. This layer provides that information by learning one embedding
-    vector for each token position.
-
-    The same positional embeddings are added to every item in the batch.
-
     Args:
         num_positions: Number of token positions represented by the embedding.
         embed_dim: Dimension of each token embedding.
     """
+
+    # Transformers do not inherently know the spatial or sequential position
+    # of a token. This layer provides that information by learning one
+    # embedding vector for each token position. The same positional embeddings
+    # are added to every item in the batch.
 
     def __init__(
         self,

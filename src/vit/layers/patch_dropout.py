@@ -3,12 +3,7 @@ from torch import Tensor, nn
 
 
 class PatchDropout(nn.Module):
-    """Randomly drop patch tokens during training.
-
-    Unlike standard dropout (:class:`torch.nn.Dropout`), which zeroes individual
-    feature elements, patch dropout discards entire token vectors from the
-    sequence. This regularizes the network, reduces compute during training,
-    and encourages representations robust to missing visual context.
+    """Randomly discard whole patch tokens during training.
 
     During evaluation or when `prob == 0.0`, the input sequence is returned
     unchanged.
@@ -52,6 +47,11 @@ class PatchDropout(nn.Module):
             training (where ``N' = max(1, int(N * (1 - prob)))``), or the
             original tensor ``(B, N, D)`` during evaluation.
         """
+        # Unlike standard dropout (torch.nn.Dropout), which zeroes individual
+        # feature elements, patch dropout discards entire token vectors from
+        # the sequence. That regularizes the network, reduces compute during
+        # training, and encourages representations robust to missing visual
+        # context.
         if not self.training or self.prob == 0.0:
             return x
 

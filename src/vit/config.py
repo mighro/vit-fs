@@ -1,21 +1,18 @@
 from dataclasses import dataclass
 
 
+# This immutable configuration object holds the architectural and
+# regularization hyperparameters used to construct a `ClassificationViT`:
+# patch size, token embedding dimension, number of transformer blocks,
+# attention-head size, feed-forward expansion, dropout rates, and the
+# stochastic-depth schedule.
 @dataclass(frozen=True)
 class ViTConfig:
     """Configuration for a Vision Transformer.
 
-    This immutable configuration object contains the architectural and
-    regularization hyperparameters used to construct a `ClassificationViT`.
-
-    The configuration controls the patch size, token embedding dimension,
-    number of transformer blocks, attention-head size, feed-forward expansion,
-    dropout rates, and stochastic-depth schedule.
-
     The `tiny()`, `base()`, `large()`, and `xlarge()` class methods provide
-    convenient predefined configurations. These are project-specific presets
-    rather than exact reproductions of the configurations from the original
-    ViT paper.
+    predefined configurations. These are project-specific presets rather than
+    exact reproductions of the configurations from the original ViT paper.
 
     Attributes:
         patch_size: Height and width of each image patch.
